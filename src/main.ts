@@ -1,34 +1,32 @@
-/**
- * Some predefined delay values (in milliseconds).
- */
-export enum Delays {
-  Short = 500,
-  Medium = 2000,
-  Long = 5000,
-}
+import { ApolloServer } from '@apollo/server';
+import { startStandaloneServer } from '@apollo/server/standalone';
+import { Neo4jGraphQL } from '@neo4j/graphql';
+import neo4j from 'neo4j-driver';
+import 'dotenv/config.js';
+import { gql } from 'graphql-tag';
 
-/**
- * Returns a Promise<string> that resolves after a given time.
- *
- * @param {string} name - A name.
- * @param {number=} [delay=Delays.Medium] - A number of milliseconds to delay resolution of the Promise.
- * @returns {Promise<string>}
- */
-function delayedHello(
-  name: string,
-  delay: number = Delays.Medium,
-): Promise<string> {
-  return new Promise((resolve: (value?: string) => void) =>
-    setTimeout(() => resolve(`Hello, ${name}`), delay),
-  );
-}
+const typeDefs = gql`
+  type RQNode {
+    title: String!
+    description: String
+    id: ID! @id
+    createdAt: DateTime! @timestamp(operations: [CREATE])
+    updatedAt: DateTime @timestamp(operations: [UPDATE])
+  }
+`;
 
-// Please see the comment in the .eslintrc.json file about the suppressed rule!
-// Below is an example of how to use ESLint errors suppression. You can read more
-// at https://eslint.org/docs/latest/user-guide/configuring/rules#disabling-rules
+const driver = neo4j.driver(
+  process.env.DB_URI,
+  neo4j.auth.basic(process.env.DB_USER, process.env.DB_PASSWORD),
+);
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export async function greeter(name: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-  // The name parameter should be of type string. Any is used only to trigger the rule.
-  return await delayedHello(name, Delays.Long);
-}
+const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
+
+const server = new ApolloServer({ schema: await neoSchema.getSchema() });
+
+const { url } = await startStandaloneServer(server, {
+  context: async ({ req }) => ({ req }),
+  listen: { port: 4000 },
+});
+
+console.log(`🚀 Server ready at ${url}`);
