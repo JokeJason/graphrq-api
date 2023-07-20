@@ -3,11 +3,6 @@
   "extends": [
     "config:base"
   ],
-  "node": {
-    "supportPolicy": [
-      "lts"
-    ]
-  },
   "packageRules": [
     {
       "updateTypes": [
