@@ -8,13 +8,18 @@ Pre-requisites:
 
 1. Install neo4j database
 2. Install APOC plugin for neo4j following [documentation](https://neo4j.com/labs/apoc/4.0/installation/#docker) as [it's required by GraphQL](https://neo4j.com/docs/graphql-manual/current/introduction/#introduction-requirements)
+3. Start a graph database
 
 Run the project:
 
 1. Switch node version to by `nvm use`
-2. Build: `npm run build`
-3. Start: `npm run start`
-4. Run integration test: `npm run test`
+2. Add `.env` file to the root of the project with the following content:
+   1. `DB_URI=bolt://localhost:7687`
+   2. `DB_USER=neo4j`
+   3. `DB_PASSWORD=xxx`, where `xxx` is the password you set for neo4j database
+3. Build: `npm run build`
+4. Start: `npm run start`
+5. Run integration test: `npm run test`
 
 Run docker based integration test:
 
