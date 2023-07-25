@@ -1,19 +1,27 @@
-export const DeleteRQNodeDocument = `
-  mutation DeleteRQNodes {
-    deleteRqNodes {
-      nodesDeleted
+export const QueryRequirements = `
+  query Requirements {
+    requirements {
+      id
+      title
+      description
+      children {
+        id
+        title
+      }
+      parent {
+        id
+        title
+      }
     }
   }
 `;
 
-export const QueryRQNodeDocument = `
-  query QueryRQNodes {
-    rqNodes {
-      createdAt
-      updatedAt
-      description
-      id
-      title
+export const CreateRequirements = `
+  mutation CreateRequirements($input: [RequirementCreateInput!]!) {
+    createRequirements(input: $input) {
+      info {
+        nodesCreated
+      }
     }
   }
 `;

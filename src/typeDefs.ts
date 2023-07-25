@@ -1,11 +1,13 @@
 import { gql } from 'graphql-tag';
 
 export const typeDefs = gql`
-  type RQNode {
+  type Requirement {
+    id: ID! @id
     title: String!
     description: String
-    id: ID! @id
     createdAt: DateTime! @timestamp(operations: [CREATE])
     updatedAt: DateTime @timestamp(operations: [UPDATE])
+    parent: Requirement @relationship(type: "CHILD_OF", direction: OUT)
+    children: [Requirement!]! @relationship(type: "CHILD_OF", direction: IN)
   }
 `;
