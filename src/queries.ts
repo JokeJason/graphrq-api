@@ -25,3 +25,11 @@ export const CreateRequirements = `
     }
   }
 `;
+
+export const DeleteRequirements = `
+  mutation DeleteRequirements {
+    deleteRequirements {
+      nodesDeleted
+    }
+  }
+`;

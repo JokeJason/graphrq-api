@@ -1,11 +1,24 @@
-import { createServer } from '../src/newServer.js';
-import { QueryRequirements, CreateRequirements } from '../src/queries.js';
+import { driver, createServer } from '../src/newServer.js';
+import {
+  QueryRequirements,
+  CreateRequirements,
+  DeleteRequirements,
+} from '../src/queries.js';
 
 describe('Neo4j GraphQL integration tests', () => {
   let newServer;
 
   beforeAll(async () => {
     newServer = await createServer();
+
+    await newServer.executeOperation({
+      query: DeleteRequirements,
+      variables: {},
+    });
+  });
+
+  afterAll(async () => {
+    await driver.close();
   });
 
   it('After initialization, there should be no data in the database', async () => {
