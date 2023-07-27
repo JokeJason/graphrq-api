@@ -33,3 +33,28 @@ export const DeleteRequirements = `
     }
   }
 `;
+
+export const UpdateRequirement = `
+  mutation UpdateRequirements($where: RequirementWhere, $update: RequirementUpdateInput) {
+    updateRequirements(where: $where, update: $update) {
+      requirements {
+        description
+        createdAt
+        id
+      }
+    }
+  }
+`;
+
+export const LinkRequirement = `
+  mutation LinkRequirements($where: RequirementWhere, $connect: RequirementConnectInput) {
+    updateRequirements(where: $where, connect: $connect) {
+      requirements {
+        id
+        description
+        createdAt
+        title
+      }
+    }
+  }
+`;
