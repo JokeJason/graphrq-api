@@ -23,7 +23,7 @@ Run the project:
 
 Run docker based integration test:
 
-1. Start docker testing `docker-compose -f docker-compose.dev.yaml up`
+1. Start docker testing `docker-compose -f docker-compose.dev.yaml up --abort-on-container-exit`
 2. Clean up docker testing `docker-compose -f docker-compose.dev.yaml down`
 
 ## Available Scripts
