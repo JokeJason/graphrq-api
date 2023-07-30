@@ -41,26 +41,26 @@ describe('Neo4j GraphQL integration tests', () => {
       variables: {
         input: [
           {
-            title: 'Requirement1',
-            description: 'description requirement 1',
+            title: 'Req1',
+            description: 'description of Req1',
             children: {
               create: [
                 {
                   node: {
-                    description: 'descp 1.1',
-                    title: 'req1.1',
+                    description: 'description of Req1.1',
+                    title: 'Req1.1',
                   },
                 },
                 {
                   node: {
-                    description: 'descp 1.2',
-                    title: 'req1.2',
+                    description: 'description of Req1.2',
+                    title: 'Req1.2',
                     children: {
                       create: [
                         {
                           node: {
-                            description: 'descp 1.2.1',
-                            title: 'req 1.2.1',
+                            description: 'description of Req1.2.1',
+                            title: 'Req1.2.1',
                           },
                         },
                       ],
@@ -72,11 +72,11 @@ describe('Neo4j GraphQL integration tests', () => {
           },
           {
             title: 'Req2',
-            description: 'descp req 2',
+            description: 'description of Req2',
           },
           {
             title: 'Req3',
-            description: 'descp req 3',
+            description: 'description of Req3',
           },
         ],
       },
@@ -159,7 +159,7 @@ describe('Neo4j GraphQL integration tests', () => {
         input: [
           {
             title: 'Req2.2',
-            description: 'descp req 2.2',
+            description: 'description of Req2.2',
           },
         ],
       },
