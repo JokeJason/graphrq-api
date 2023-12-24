@@ -1,7 +1,7 @@
 {
-  "name": "node-typescript-boilerplate",
+  "name": "graphql-api",
   "version": "0.0.0",
-  "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
+  "description": "GraphQL API for Neo4j",
   "type": "module",
   "engines": {
     "node": ">= 18.12 <19"
