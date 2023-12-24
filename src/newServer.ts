@@ -6,8 +6,8 @@ import 'dotenv/config.js';
 import { typeDefs } from './typeDefs.js';
 
 export const driver = neo4j.driver(
-  process.env.DB_URI,
-  neo4j.auth.basic(process.env.DB_USER, process.env.DB_PASSWORD),
+  process.env.NEO4J_URI,
+  neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD),
 );
 
 const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
