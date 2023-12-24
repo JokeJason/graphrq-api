@@ -5,7 +5,7 @@ import {
   DeleteRequirements,
   UpdateRequirement,
   LinkRequirement,
-} from '../src/queries.js';
+} from './queries.js';
 
 describe('Neo4j GraphQL integration tests', () => {
   let newServer;
