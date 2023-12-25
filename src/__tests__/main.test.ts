@@ -1,4 +1,4 @@
-import { driver, createServer } from '../src/newServer.js';
+import { driver, createServer } from '../newServer.js';
 import {
   QueryRequirements,
   CreateRequirements,
