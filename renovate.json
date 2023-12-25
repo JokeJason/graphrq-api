@@ -1,17 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "baseBranches": [
-    "develop"
-  ],
-  "extends": [
-    "config:base"
-  ],
+  "baseBranches": ["develop"],
+  "extends": ["config:base"],
   "packageRules": [
     {
-      "updateTypes": [
-        "minor",
-        "major"
-      ],
+      "updateTypes": ["minor", "major"],
       "matchCurrentVersion": "/^\\d+\\.\\d+\\.x$/"
     }
   ]

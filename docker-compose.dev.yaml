@@ -5,10 +5,10 @@ services:
     environment:
       NEO4J_AUTH: 'neo4j/neo4j_test'
       NEO4JLABS_PLUGINS: '["apoc"]'
-#   ports are no need to be exposed, as app can access db within docker network
-#    ports:
-#      - "7474:7474"
-#      - "7687:7687"
+  #   ports are no need to be exposed, as app can access db within docker network
+  #    ports:
+  #      - "7474:7474"
+  #      - "7687:7687"
   app:
     build:
       context: .
@@ -21,4 +21,4 @@ services:
       DB_URI: 'bolt://db:7687'
       DB_USER: 'neo4j'
       DB_PASSWORD: 'neo4j_test'
-    command: ["npm", "run", "test"]
+    command: ['npm', 'run', 'test']
