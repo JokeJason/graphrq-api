@@ -20,6 +20,26 @@ export const QueryUsers = gql`
   }
 `
 
+export const UsersAggregate = gql`
+  query UsersAggregate($where: UserWhere) {
+    usersAggregate(where: $where) {
+      count
+      email {
+        longest
+        shortest
+      }
+      id {
+        longest
+        shortest
+      }
+      name {
+        longest
+        shortest
+      }
+    }
+  }
+`
+
 export const CreateUser = gql`
   mutation CreateUsers($input: [UserCreateInput!]!) {
     createUsers(input: $input) {

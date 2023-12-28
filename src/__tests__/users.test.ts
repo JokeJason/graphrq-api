@@ -3,7 +3,7 @@ import {
   DeleteUsers,
   CreateUser,
   QueryUsers,
-  UpdateUsers,
+  UpdateUsers, UsersAggregate,
 } from './userQueries.js';
 
 describe('GraphRQ Users integration tests', () => {
@@ -34,6 +34,7 @@ describe('GraphRQ Users integration tests', () => {
     });
 
     it('Can create a single user', async () => {
+      // Step 1: create a user
       const response = await newServer.executeOperation({
         query: CreateUser,
         variables: {
@@ -46,15 +47,30 @@ describe('GraphRQ Users integration tests', () => {
         }
       });
 
+      // Step 2: verify response includes correct user data
       expect(response.body.kind).toBe('single');
       expect(response.body.singleResult.errors).toBeUndefined();
       expect(response.body.singleResult.data?.createUsers.users).toHaveLength(1);
       const user = response.body.singleResult.data?.createUsers.users[0];
       expect(user.name).toBe('User1');
       expect(user.email).toBe('user1@graphrq.com.au');
+
+      // Step 3: Perform a 'query' operation to verify that the user has been created
+      const queryResponse = await newServer.executeOperation({
+        query: QueryUsers,
+        variables: {
+          where: {
+            id: user.id,
+          }
+        },
+      });
+      expect(queryResponse.body.kind).toBe('single');
+      expect(queryResponse.body.singleResult.errors).toBeUndefined();
+      expect(queryResponse.body.singleResult.data?.users[0].name).toBe('User1');
     });
 
     it('Can create multiple users', async () => {
+      // Step 1: create two users
       const response = await newServer.executeOperation({
         query: CreateUser,
         variables: {
@@ -71,6 +87,7 @@ describe('GraphRQ Users integration tests', () => {
         }
       });
 
+      // Step 2: verify response includes correct user data
       expect (response.body.kind).toBe('single');
       expect (response.body.singleResult.errors).toBeUndefined();
       expect (response.body.singleResult.data?.createUsers.users).toHaveLength(2);
@@ -79,25 +96,45 @@ describe('GraphRQ Users integration tests', () => {
       expect(users[0].email).toBe('user2@graphrq.com.au');
       expect(users[1].name).toBe('User3');
       expect(users[1].email).toBe('user3@graphrq.com.au');
+
+      // Step 3: Perform a 'query' operation to verify that the users have been created
+      const queryResponse = await newServer.executeOperation({
+        query: QueryUsers,
+        variables: {
+          where: {
+            id_IN: [users[0].id, users[1].id],
+          }
+        },
+      });
+      expect(queryResponse.body.kind).toBe('single');
+      expect(queryResponse.body.singleResult.errors).toBeUndefined();
+      expect(queryResponse.body.singleResult.data?.users).toHaveLength(2);
     });
 
     it('Can update a user', async () => {
-      // first retrieve the first user
-      const response = await newServer.executeOperation({
-        query: QueryUsers,
-        variables: {},
+      // Step 1: Create a user using the 'create' operation
+      const createResponse = await newServer.executeOperation({
+        query: CreateUser,
+        variables: {
+          input: [
+            {
+              name: 'UserNew',
+              email: 'usernew@graphrq.com.au'
+            }
+          ]
+        }
       });
-      // get the first user
-      const user1 = response.body.singleResult.data?.users[0];
-      // update the user
+      const newUser = createResponse.body.singleResult.data?.createUsers.users[0];
+
+      // Step 2: Update the user using the 'update' operation
       const updateResponse = await newServer.executeOperation({
         query: UpdateUsers,
         variables: {
           where: {
-            id: user1.id,
+            id: newUser.id,
           },
           update: {
-            name: 'User1Updated'
+            name: 'newUserUpdated'
           }
         }
       })
@@ -106,35 +143,42 @@ describe('GraphRQ Users integration tests', () => {
       expect(updateResponse.body.singleResult.errors).toBeUndefined();
       expect(updateResponse.body.singleResult.data?.updateUsers.users).toHaveLength(1);
       const updatedUser = updateResponse.body.singleResult.data?.updateUsers.users[0];
-      expect(updatedUser.name).toBe('User1Updated');
+      expect(updatedUser.name).toBe('newUserUpdated');
 
-      // check that the user has been updated
+      // Step 3: Query the updated user to verify that the update has been performed
       const queryResponse = await newServer.executeOperation({
         query: QueryUsers,
         variables: {
           where: {
-            id: user1.id,
+            id: newUser.id,
           },
-          update: {
-            name: 'User1Updated'
-          }
         },
       });
 
       expect(queryResponse.body.kind).toBe('single');
       expect(queryResponse.body.singleResult.errors).toBeUndefined();
-      expect(queryResponse.body.singleResult.data?.users[0].name).toBe('User1Updated');
+      expect(queryResponse.body.singleResult.data?.users[0].name).toBe('newUserUpdated');
     });
 
     it('Can delete a user', async () => {
-      // first retrieve the first user
-      const response = await newServer.executeOperation({
-        query: QueryUsers,
-        variables: {},
+      // Step 1: Create a user
+      const createResponse = await newServer.executeOperation({
+        query: CreateUser,
+        variables: {
+          input: [
+            {
+              name: 'UserToDelete',
+              email: 'usertodelete@graphrq.com.au',
+            }
+          ]
+        }
       });
-      // get the first user
-      const user = response.body.singleResult.data?.users[0];
-      // delete the user
+      expect(createResponse.body.kind).toBe('single');
+      expect(createResponse.body.singleResult.errors).toBeUndefined();
+      expect(createResponse.body.singleResult.data?.createUsers.info.nodesCreated).toBe(1);
+      const user = createResponse.body.singleResult.data?.createUsers.users[0];
+
+      // Step 2: Delete the user
       const deleteResponse = await newServer.executeOperation({
         query: DeleteUsers,
         variables: {
@@ -143,15 +187,61 @@ describe('GraphRQ Users integration tests', () => {
           }
         }
       });
-      // check nodesDeleted is 1
       expect(deleteResponse.body.kind).toBe('single');
-      // check that the user has been deleted
+      expect(deleteResponse.body.singleResult.errors).toBeUndefined();
+      expect(deleteResponse.body.singleResult.data?.deleteUsers.nodesDeleted).toBe(1);
+
+      // Step 3: Attempt to query the deleted user, and verify that it does not exist
       const queryResponse = await newServer.executeOperation({
         query: QueryUsers,
+        variables: {
+          where: {
+            id: user.id,
+          }
+        }
+      });
+      expect(queryResponse.body.kind).toBe('single');
+      expect(queryResponse.body.singleResult.errors).toBeUndefined();
+      expect(queryResponse.body.singleResult.data?.users).toHaveLength(0);
+    });
+
+    it('Can aggregate users', async () => {
+      // Step 0: delete all users
+      const deleteResponse = await newServer.executeOperation({
+        query: DeleteUsers,
         variables: {},
       });
-      // get the first user
-      const users = queryResponse.body.singleResult.data?.users;
-      expect(users).toHaveLength(2);
-    });
+      expect(deleteResponse.body.kind).toBe('single');
+      expect(deleteResponse.body.singleResult.errors).toBeUndefined();
+
+      // Step 1: Create three users
+      await newServer.executeOperation({
+        query: CreateUser,
+        variables: {
+          input: [
+            {
+              name: 'User4',
+              email: 'user4@graphrq.com.au',
+            },
+            {
+              name: 'User5',
+              email: 'user5@graphrq.com.au',
+            },
+            {
+              name: 'User6',
+              email: 'user6@graphrq.com.au',
+            },
+          ],
+        },
+      });
+
+      // Step 2: Aggregate the users to count the number of users
+      const aggregateResponse = await newServer.executeOperation({
+        query: UsersAggregate,
+        variables: {},
+      });
+      expect(aggregateResponse.body.kind).toBe('single');
+      expect(aggregateResponse.body.singleResult.errors).toBeUndefined();
+      expect(aggregateResponse.body.singleResult.data?.usersAggregate.count).toBe(3);
+    })
 });
