@@ -9,10 +9,19 @@ export const driver = neo4j.driver(
   neo4j.auth.basic(process.env.NEO4J_USER, process.env.NEO4J_PASSWORD),
 );
 
-const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
+async function createSchema() {
+  const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
+  const graphqlSchema = await neoSchema.getSchema();
+
+  // Create constraints and indexes before ApolloServer is created
+  await neoSchema.assertIndexesAndConstraints({ options: { create: true } });
+
+  return graphqlSchema;
+}
 
 export async function createServer(): Promise<ApolloServer> {
+  const schema = await createSchema();
   return new ApolloServer({
-    schema: await neoSchema.getSchema(),
+    schema: schema,
   });
 }

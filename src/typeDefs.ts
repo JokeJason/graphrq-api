@@ -8,7 +8,7 @@ export const typeDefs = gql`
   type User {
     id: ID! @id
     name: String!
-    email: String!
+    email: String! @unique
   }
 
   enum RequirementCategory {
