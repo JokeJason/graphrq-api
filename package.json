@@ -37,7 +37,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@apollo/server": "^4.7.5",
-    "@neo4j/graphql": "^3.23.1",
+    "@neo4j/graphql": "^4.0.0",
     "dotenv": "^16.3.1",
     "graphql": "^16.7.1",
     "graphql-tag": "^2.12.6",
