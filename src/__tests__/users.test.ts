@@ -33,40 +33,131 @@ describe('GraphRQ Users integration tests', () => {
       expect(response.body.singleResult.data?.users).toHaveLength(0);
     });
 
-    it('Can create a single user', async () => {
-      // Step 1: create a user
-      const response = await newServer.executeOperation({
-        query: CreateUser,
-        variables: {
-          input: [
-            {
-              name: 'User1',
-              email: 'user1@graphrq.com.au',
+    describe('Can create a user', () => {
+      describe('Positive tests', () => {
+        it('Can create a single user', async () => {
+          // Step 1: create a user
+          const response = await newServer.executeOperation({
+            query: CreateUser,
+            variables: {
+              input: [
+                {
+                  name: 'User1',
+                  email: 'user1@graphrq.com.au',
+                }
+              ]
             }
-          ]
-        }
+          });
+
+          // Step 2: verify response includes correct user data
+          expect(response.body.kind).toBe('single');
+          expect(response.body.singleResult.errors).toBeUndefined();
+          expect(response.body.singleResult.data?.createUsers.users).toHaveLength(1);
+          const user = response.body.singleResult.data?.createUsers.users[0];
+          expect(user.name).toBe('User1');
+          expect(user.email).toBe('user1@graphrq.com.au');
+
+          // Step 3: Perform a 'query' operation to verify that the user has been created
+          const queryResponse = await newServer.executeOperation({
+            query: QueryUsers,
+            variables: {
+              where: {
+                id: user.id,
+              }
+            },
+          });
+          expect(queryResponse.body.kind).toBe('single');
+          expect(queryResponse.body.singleResult.errors).toBeUndefined();
+          expect(queryResponse.body.singleResult.data?.users[0].name).toBe('User1');
+        });
+
       });
 
-      // Step 2: verify response includes correct user data
-      expect(response.body.kind).toBe('single');
-      expect(response.body.singleResult.errors).toBeUndefined();
-      expect(response.body.singleResult.data?.createUsers.users).toHaveLength(1);
-      const user = response.body.singleResult.data?.createUsers.users[0];
-      expect(user.name).toBe('User1');
-      expect(user.email).toBe('user1@graphrq.com.au');
+      describe('Negative tests', () => {
+        it('Invalid input test', async () => {
+          // Objective: Ensure that the system rejects the creation of a user with invalid input (e.g., missing email).
 
-      // Step 3: Perform a 'query' operation to verify that the user has been created
-      const queryResponse = await newServer.executeOperation({
-        query: QueryUsers,
-        variables: {
-          where: {
-            id: user.id,
-          }
-        },
+          // Step 1: Attempt to create a user with invalid input
+          const response = await newServer.executeOperation({
+            query: CreateUser,
+            variables: {
+              input: [
+                {
+                  name: 'UserInvalid',
+                },
+              ],
+            },
+          });
+
+          // Step 2: Verify that the system rejects the invalid input
+          expect(response.body.kind).toBe('single');
+          expect(response.body.singleResult.errors).toHaveLength(1);
+          expect(response.body.singleResult.errors[0].message).toBe(
+            'Variable "$input" got invalid value { name: "UserInvalid" } at "input[0]"; Field "email" of required type "String!" was not provided.'
+          );
+        });
+
+        it('Duplicate user test', async () => {
+          // Objective: Ensure that the system rejects the creation of a user with duplicate email.
+
+          // Step 1: Create first user
+          await newServer.executeOperation({
+            query: CreateUser,
+            variables: {
+              input: [
+                {
+                  name: 'UserDuplicate1',
+                  email: 'userduplicate@graphrq.com.au',
+                },
+              ],
+            },
+          });
+
+          // Step 2: Attempt to create second user with duplicate email
+          const response = await newServer.executeOperation({
+            query: CreateUser,
+            variables: {
+              input: [
+                {
+                  name: 'UserDuplicate2',
+                  email: 'userduplicate@graphrq.com.au',
+                },
+              ],
+            },
+          });
+
+          // Step 3: Verify that the system rejects the duplicate email
+          expect(response.body.kind).toBe('single');
+          expect(response.body.singleResult.errors).toHaveLength(1);
+          expect(response.body.singleResult.errors[0].message).toBe(
+            'Constraint validation failed'
+          );
+        });
+
+        it('Invalid email test', async () => {
+          // Objective: Ensure that the system rejects the creation of a user with invalid email.
+
+          // Step 1: Attempt to create a user with invalid email
+          const response = await newServer.executeOperation({
+            query: CreateUser,
+            variables: {
+              input: [
+                {
+                  name: 'UserInvalidEmail',
+                  email: 'userinvalidemail',
+                },
+              ],
+            },
+          });
+
+          // Step 2: Verify that the system rejects the invalid email
+          expect(response.body.kind).toBe('single');
+          expect(response.body.singleResult.errors).toHaveLength(1);
+          expect(response.body.singleResult.errors[0].message).toBe(
+            'Variable "$input" got invalid value { name: "UserInvalidEmail", email: "userinvalidemail" } at "input[0].email"; Expected type "Email", found "userinvalidemail"; Email cannot represent value: userinvalidemail'
+          );
+        });
       });
-      expect(queryResponse.body.kind).toBe('single');
-      expect(queryResponse.body.singleResult.errors).toBeUndefined();
-      expect(queryResponse.body.singleResult.data?.users[0].name).toBe('User1');
     });
 
     it('Can create multiple users', async () => {
