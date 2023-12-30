@@ -1,4 +1,5 @@
 import { gql } from 'graphql-tag';
+import { lengthDirectiveTypeDefs } from './directives/lengthDirective.js';
 import { upperDirectiveTypeDefs } from './directives/upperDirective.js';
 
 // Here is where we define data types of our Neo4j database. By using this type definition, Neo4jGraphQL library will
@@ -7,11 +8,12 @@ import { upperDirectiveTypeDefs } from './directives/upperDirective.js';
 
 export const typeDefs = [
   upperDirectiveTypeDefs,
+  lengthDirectiveTypeDefs,
   gql`
     type User {
       id: ID! @id
       name: String! @uppercase
-      email: String! @unique
+      email: String! @unique @length(max: 25)
     }
 
     enum RequirementCategory {
