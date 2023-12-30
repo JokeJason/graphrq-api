@@ -18,7 +18,7 @@ export const QueryUsers = gql`
       email
     }
   }
-`
+`;
 
 export const UsersAggregate = gql`
   query UsersAggregate($where: UserWhere) {
@@ -38,7 +38,7 @@ export const UsersAggregate = gql`
       }
     }
   }
-`
+`;
 
 export const CreateUser = gql`
   mutation CreateUsers($input: [UserCreateInput!]!) {
@@ -53,7 +53,7 @@ export const CreateUser = gql`
       }
     }
   }
-`
+`;
 
 // Although name of mutation endpoint is UpdateUsers, but it can only do single update as shown in https://neo4j.com/docs/graphql/current/mutations/update/#_single_update
 export const UpdateUsers = gql`
@@ -69,4 +69,4 @@ export const UpdateUsers = gql`
       }
     }
   }
-`
+`;

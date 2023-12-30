@@ -1,7 +1,7 @@
-import neo4j from 'neo4j-driver';
-import { Neo4jGraphQL } from '@neo4j/graphql';
 import { ApolloServer } from '@apollo/server';
 import 'dotenv/config.js';
+import { Neo4jGraphQL } from '@neo4j/graphql';
+import neo4j from 'neo4j-driver';
 import { typeDefs } from './typeDefs.js';
 
 export const driver = neo4j.driver(
