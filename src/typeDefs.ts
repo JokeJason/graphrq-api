@@ -5,9 +5,10 @@ import { gql } from 'graphql-tag';
 // And because we are not defining a complete GraphQL DSL, we don't use .graphql file.
 
 export const typeDefs = gql`
+  directive @uppercase on FIELD_DEFINITION
   type User {
     id: ID! @id
-    name: String!
+    name: String! @uppercase
     email: String! @unique
   }
 
