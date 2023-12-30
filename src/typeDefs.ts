@@ -11,7 +11,7 @@ export const typeDefs = [
     type User {
       id: ID! @id
       name: String! @uppercase
-      email: String! @length(max: 8) @unique
+      email: String! @unique
     }
 
     enum RequirementCategory {
