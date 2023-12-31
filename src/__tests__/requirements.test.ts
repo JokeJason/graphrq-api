@@ -1,3 +1,4 @@
+import { describe } from 'node:test';
 import { v4 as uuidv4 } from 'uuid';
 import { createServer, driver } from '../newServer.js';
 import {
@@ -194,37 +195,43 @@ describe('GraphRQ Requirement Node integration tests', () => {
       });
     });
   });
-  describe('When creating a requirement node and try to connect it with an non-existing user node', () => {
-    it('should create the requirement node but not connect it to the non-existing user node', async () => {
-      // Step 1: create a requirement node with name and description (required fields)
-      const response = await newServer.executeOperation({
-        query: CreateRequirements,
-        variables: {
-          input: [
-            {
-              title: 'Req3',
-              description: 'description of Req3',
-              creator: {
-                connect: {
-                  where: {
-                    node: {
-                      id: uuidv4(),
+
+  describe('When creating a requirement node and try to connect it with other nodes', () => {
+    describe('Positive tests', () => {
+      describe('When connecting to non-existing user node', () => {
+        it('should create the requirement node but not connect it to the non-existing user node', async () => {
+          // Step 1: create a requirement node with name and description (required fields)
+          const response = await newServer.executeOperation({
+            query: CreateRequirements,
+            variables: {
+              input: [
+                {
+                  title: 'Req3',
+                  description: 'description of Req3',
+                  creator: {
+                    connect: {
+                      where: {
+                        node: {
+                          id: uuidv4(),
+                        },
+                      },
                     },
                   },
                 },
-              },
+              ],
             },
-          ],
-        },
-      });
+          });
 
-      // Step 2: check if the node is created successfully
-      const info = response.body.singleResult.data?.createRequirements?.info;
-      const requirements =
-        response.body.singleResult.data?.createRequirements?.requirements;
-      expect(info?.nodesCreated).toBe(1);
-      expect(requirements?.[0]?.description).toBe('description of Req3');
-      expect(requirements?.[0]?.creator).toBeNull();
+          // Step 2: check if the node is created successfully
+          const info =
+            response.body.singleResult.data?.createRequirements?.info;
+          const requirements =
+            response.body.singleResult.data?.createRequirements?.requirements;
+          expect(info?.nodesCreated).toBe(1);
+          expect(requirements?.[0]?.description).toBe('description of Req3');
+          expect(requirements?.[0]?.creator).toBeNull();
+        });
+      });
     });
   });
 });
