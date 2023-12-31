@@ -7,7 +7,10 @@ import {
 } from 'graphql/type/index.js';
 
 const lengthDirective = (directiveName: string) => {
-  const createLimitedLengthType = (type, maxLength: number) =>
+  const createLimitedLengthType = (
+    type: GraphQLScalarType,
+    maxLength: number,
+  ) =>
     new GraphQLScalarType({
       name: `${type.name}WithLengthAtMost${maxLength}`,
       description: `A ${type.name} with limited length`,
