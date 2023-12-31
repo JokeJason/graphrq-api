@@ -2,6 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import 'dotenv/config.js';
 import { Neo4jGraphQL } from '@neo4j/graphql';
 import neo4j from 'neo4j-driver';
+import { stringFormatDirectiveTransformer } from './directives/stringFormatDirective.js';
 import { typeDefs } from './typeDefs.js';
 
 export const driver = neo4j.driver(
@@ -11,7 +12,9 @@ export const driver = neo4j.driver(
 
 async function createSchema() {
   const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
-  const graphqlSchema = await neoSchema.getSchema();
+  const graphqlSchema = stringFormatDirectiveTransformer(
+    await neoSchema.getSchema(),
+  );
 
   // Create constraints and indexes before ApolloServer is created
   await neoSchema.assertIndexesAndConstraints({ options: { create: true } });

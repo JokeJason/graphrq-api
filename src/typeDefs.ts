@@ -1,19 +1,17 @@
 import { gql } from 'graphql-tag';
-import { lengthDirectiveTypeDefs } from './directives/lengthDirective.js';
-import { upperDirectiveTypeDefs } from './directives/upperDirective.js';
+import { stringFormatDirectiveTypeDefs } from './directives/stringFormatDirective.js';
 
 // Here is where we define data types of our Neo4j database. By using this type definition, Neo4jGraphQL library will
 // automatically generate GraphQL schema for us (which can be retrieved in Apollo Sandbox).
 // And because we are not defining a complete GraphQL DSL, we don't use .graphql file.
 
 export const typeDefs = [
-  upperDirectiveTypeDefs,
-  lengthDirectiveTypeDefs,
+  stringFormatDirectiveTypeDefs,
   gql`
     type User {
       id: ID! @id
       name: String!
-      email: String! @unique
+      email: String! @unique @stringFormat(format: "email")
     }
 
     enum RequirementCategory {

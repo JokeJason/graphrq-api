@@ -158,7 +158,7 @@ describe('GraphRQ Users integration tests', () => {
         expect(response.body.kind).toBe('single');
         expect(response.body.singleResult.errors).toHaveLength(1);
         expect(response.body.singleResult.errors[0].message).toBe(
-          'Variable "$input" got invalid value { name: "UserInvalidEmail", email: "userinvalidemail" } at "input[0].email"; Expected type "Email", found "userinvalidemail"; Email cannot represent value: userinvalidemail',
+          'Value userinvalidemail is not a valid email',
         );
       });
     });
