@@ -1,74 +1,55 @@
 import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils';
+import { GraphQLSchema, isNonNullType, isScalarType } from 'graphql';
 import {
   GraphQLFieldConfig,
   GraphQLInputFieldConfig,
-  GraphQLSchema,
-  isNonNullType,
-  isScalarType,
-} from 'graphql';
-import { GraphQLScalarType } from 'graphql/type/index.js';
+  GraphQLScalarType,
+} from 'graphql/type/index.js';
 
-function lengthDirective(directiveName: string) {
-  class LimitedLengthType extends GraphQLScalarType {
-    constructor(type: GraphQLScalarType, maxLength: number) {
-      super({
-        name: `LimitedLength${type.name}`,
-        description: `A ${type.name} with limited length`,
-        serialize: (value) => {
-          const newValue: string = <string>type.serialize(value);
-          if (newValue.length > maxLength) {
-            throw new Error(
-              `expected most length: ${maxLength.toString(
-                10,
-              )}; given length: ${newValue.length.toString(10)}`,
-            );
-          }
-          return newValue;
-        },
-        parseValue: (value) => {
-          return type.parseValue(value);
-        },
-        parseLiteral: (ast) => {
-          return type.parseLiteral(ast, {});
-        },
-      });
-    }
-  }
+const lengthDirective = (directiveName: string) => {
+  const createLimitedLengthType = (type, maxLength: number) =>
+    new GraphQLScalarType({
+      name: `${type.name}WithLengthAtMost${maxLength}`,
+      description: `A ${type.name} with limited length`,
+      serialize: (value) => {
+        const newValue: string = <string>type.serialize(value);
+        if (newValue.length > maxLength) {
+          throw new Error(
+            `Value length ${newValue.length} exceeds max length ${maxLength}`,
+          );
+        }
+        return newValue;
+      },
+      parseValue: (value) => {
+        return type.parseValue(value);
+      },
+      parseLiteral: (ast) => {
+        return type.parseLiteral(ast, {});
+      },
+    });
 
-  const limitedLengthTypes: Record<
-    string,
-    Record<number, GraphQLScalarType>
-  > = {};
+  const limitedLengthTypes = {};
 
-  function getLimitLengthType(
+  const getLimitLengthType = (
     type: GraphQLScalarType,
     maxLength: number,
-  ): GraphQLScalarType {
-    const limitedLengthTypesByTypeName = limitedLengthTypes[type.name];
-    if (!limitedLengthTypesByTypeName) {
-      const newType = new LimitedLengthType(type, maxLength);
+  ): GraphQLScalarType => {
+    if (!limitedLengthTypes[type.name]) {
       limitedLengthTypes[type.name] = {};
-      limitedLengthTypes[type.name][maxLength] = newType;
-      return newType;
     }
-
-    const limitedLengthType = limitedLengthTypesByTypeName[maxLength];
-    if (!limitedLengthType) {
-      const newType = new LimitedLengthType(type, maxLength);
-      limitedLengthTypesByTypeName[maxLength] = newType;
-      return newType;
+    if (!limitedLengthTypes[type.name][maxLength]) {
+      limitedLengthTypes[type.name][maxLength] = createLimitedLengthType(
+        type,
+        maxLength,
+      );
     }
+    return limitedLengthTypes[type.name][maxLength];
+  };
 
-    throw new Error(
-      `LimitedLengthType already exists for type ${
-        type.name
-      } and maxLength ${maxLength.toString(10)}`,
-    );
-  }
-
-  function wrapType<
-    F extends GraphQLFieldConfig<string, number> | GraphQLInputFieldConfig,
-  >(fieldConfig: F, directiveArgumentMap: Record<string, number>): void {
+  const wrapType = (
+    fieldConfig: GraphQLFieldConfig<string, number> | GraphQLInputFieldConfig,
+    directiveArgumentMap: Record<string, number>,
+  ) => {
     if (
       isNonNullType(fieldConfig.type) &&
       isScalarType(fieldConfig.type.ofType)
@@ -85,7 +66,7 @@ function lengthDirective(directiveName: string) {
     } else {
       throw new Error(`Not a scalar type: ${fieldConfig.type.toString()}`);
     }
-  }
+  };
 
   return {
     lengthDirectiveTypeDefs: `directive @${directiveName}(max: Int) on FIELD_DEFINITION | INPUT_FIELD_DEFINITION`,
@@ -106,7 +87,7 @@ function lengthDirective(directiveName: string) {
       });
     },
   };
-}
+};
 
 export const { lengthDirectiveTypeDefs, lengthDirectiveTransformer } =
   lengthDirective('length');
