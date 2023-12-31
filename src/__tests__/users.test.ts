@@ -7,7 +7,7 @@ import {
   UsersAggregate,
 } from './userQueries.js';
 
-describe('GraphRQ Users integration tests', () => {
+describe('GraphRQ User Node integration tests', () => {
   let newServer;
 
   beforeAll(async () => {
