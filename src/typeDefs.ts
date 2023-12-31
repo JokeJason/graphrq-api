@@ -25,11 +25,11 @@ export const typeDefs = [
 
     type Requirement {
       id: ID! @id
-      name: String!
+      title: String!
       description: String
       createdAt: DateTime! @timestamp(operations: [CREATE])
       creator: User @relationship(type: "CREATED", direction: IN)
-      updatedAt: DateTime! @timestamp(operations: [UPDATE])
+      updatedAt: DateTime @timestamp(operations: [UPDATE])
       parent: Requirement @relationship(type: "CHILD_OF", direction: OUT)
       children: [Requirement!]! @relationship(type: "CHILD_OF", direction: IN)
       tests: [Test!]! @relationship(type: "TESTED_BY", direction: IN)
