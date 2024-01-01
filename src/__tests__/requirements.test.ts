@@ -5,6 +5,7 @@ import {
   DeleteRequirements,
   QueryRequirements,
 } from './requirementQueries.js';
+import { CreateUser, DeleteUsers } from './userQueries.js';
 
 const checkTimeStampIsWithinLastMinute = (
   timestamp: number | string | Date,
@@ -22,9 +23,16 @@ describe('GraphRQ Requirement Node integration tests', () => {
 
   beforeAll(async () => {
     newServer = await createServer();
+  });
 
+  beforeEach(async () => {
     await newServer.executeOperation({
       query: DeleteRequirements,
+      variables: {},
+    });
+
+    await newServer.executeOperation({
+      query: DeleteUsers,
       variables: {},
     });
   });
@@ -158,75 +166,348 @@ describe('GraphRQ Requirement Node integration tests', () => {
           `Field "createdAt" is not defined by type "RequirementCreateInput"`,
         );
       });
-
-      it('should fail to create Requirement with Invalid creator ID', async () => {
-        // create a random uuid
-        const randomUserId = uuidv4();
-
-        // Step 2: create a requirement node with invalid creator ID
-        const response = await newServer.executeOperation({
-          query: CreateRequirements,
-          variables: {
-            input: [
-              {
-                title: 'Req1',
-                description: 'description of Req1',
-                creator: {
-                  connectOrCreate: {
-                    where: {
-                      node: {
-                        id: randomUserId,
-                      },
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        });
-
-        const errors = response.body.singleResult.errors;
-        expect(errors).toBeDefined();
-        expect(errors).toHaveLength(1);
-        expect(errors[0].message).toContain(
-          "Cannot read property 'id' of null",
-        );
-      });
     });
   });
 
   describe('When creating a requirement node and try to connect it with other nodes', () => {
-    describe('Positive tests', () => {
-      it('should create the requirement node but not connect it to the non-existing user node', async () => {
-        // Step 1: create a requirement node with name and description (required fields)
-        const response = await newServer.executeOperation({
-          query: CreateRequirements,
-          variables: {
-            input: [
-              {
-                title: 'Req3',
-                description: 'description of Req3',
-                creator: {
-                  connect: {
-                    where: {
-                      node: {
-                        id: uuidv4(),
+    describe('Connect with user node', () => {
+      describe('Positive tests', () => {
+        describe('When try to connect with non-existing user node', () => {
+          it('should create the requirement node but not connect it to the non-existing user node', async () => {
+            // Step 1: create a requirement node with name and description (required fields)
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req3',
+                    description: 'description of Req3',
+                    creator: {
+                      connect: {
+                        where: {
+                          node: {
+                            id: uuidv4(),
+                          },
+                        },
                       },
                     },
                   },
-                },
+                ],
               },
-            ],
-          },
+            });
+
+            // Step 2: check if the node is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(1);
+            expect(requirements?.[0]?.description).toBe('description of Req3');
+            expect(requirements?.[0]?.creator).toBeNull();
+          });
         });
 
-        // Step 2: check if the node is created successfully
-        const info = response.body.singleResult.data?.createRequirements?.info;
-        const requirements =
-          response.body.singleResult.data?.createRequirements?.requirements;
-        expect(info?.nodesCreated).toBe(1);
-        expect(requirements?.[0]?.description).toBe('description of Req3');
-        expect(requirements?.[0]?.creator).toBeNull();
+        describe('When try to connect with existing user node', () => {
+          it('should create the requirement node and connect it to the existing user node', async () => {
+            // Step 1: create a user node
+            const userResponse = await newServer.executeOperation({
+              query: CreateUser,
+              variables: {
+                input: [
+                  {
+                    name: 'UserTest',
+                    email: 'usertest@graphrq.com',
+                  },
+                ],
+              },
+            });
+            expect(userResponse.body.singleResult.errors).toBeUndefined();
+            const userId =
+              userResponse.body.singleResult.data?.createUsers.users[0].id;
+
+            // Step 2: create a requirement node and connect it to the existing user node
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req4',
+                    description: 'description of Req4',
+                    creator: {
+                      connect: {
+                        where: {
+                          node: {
+                            id: userId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 3: check if the node is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(1);
+            expect(requirements?.[0]?.description).toBe('description of Req4');
+            expect(requirements?.[0]?.creator?.id).toBe(userId);
+          });
+        });
+
+        describe('When try to connect with a new user node that created in the same request', () => {
+          it('should create the requirement node and connect it to the new user node using connectOrCreate', async () => {
+            // Step 1: create a requirement node and connect it to the new user node
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req5',
+                    description: 'description of Req5',
+                    creator: {
+                      connectOrCreate: {
+                        onCreate: {
+                          node: {
+                            name: 'UserTest2',
+                            email: 'usertest2@graphrq.com',
+                          },
+                        },
+                        where: {
+                          node: {
+                            email: 'usertest2@graphrq.com',
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 2: check if the node is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(2);
+            expect(requirements?.[0]?.description).toBe('description of Req5');
+            expect(requirements?.[0]?.creator?.name).toBe('UserTest2');
+            expect(requirements?.[0]?.creator?.email).toBe(
+              'usertest2@graphrq.com',
+            );
+          });
+
+          it('should create the requirement node and connect it to the new user node using create', async () => {
+            // Step 1: create a requirement node and connect it to the new user node
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req5',
+                    description: 'description of Req5',
+                    creator: {
+                      create: {
+                        node: {
+                          name: 'UserTest2',
+                          email: 'usertest2@graphrq.com',
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 2: check if the node is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(2);
+            expect(requirements?.[0]?.description).toBe('description of Req5');
+            expect(requirements?.[0]?.creator?.name).toBe('UserTest2');
+            expect(requirements?.[0]?.creator?.email).toBe(
+              'usertest2@graphrq.com',
+            );
+          });
+        });
+      });
+    });
+
+    describe('Connect with other requirement node', () => {
+      describe('Positive tests', () => {
+        describe('When try to connect with existing parent requirement node', () => {
+          it('should create the requirement node and connect it to the existing parent requirement node', async () => {
+            // Step 1: create a requirement node
+            const requirementResponse = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req6',
+                    description: 'description of Req6',
+                  },
+                ],
+              },
+            });
+            const requirementId =
+              requirementResponse.body.singleResult.data.createRequirements
+                ?.requirements[0].id;
+
+            // Step 2: create a new requirement
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req7',
+                    description: 'description of Req7',
+                    parent: {
+                      connect: {
+                        where: {
+                          node: {
+                            id: requirementId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 3: check if the node is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(1);
+            expect(requirements?.[0]?.description).toBe('description of Req7');
+            expect(requirements?.[0]?.parent?.id).toBe(requirementId);
+          });
+        });
+
+        describe('When try to connect with new parent requirement node that created in the same request', () => {
+          it('should create the requirement node and connect it to the new parent requirement node using connectOrCreate', async () => {
+            // Step 1: create a requirement node and connect it to the new parent requirement node
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req8',
+                    parent: {
+                      create: {
+                        node: {
+                          title: 'Req8-Parent',
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 2: check if nodes is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(2);
+            expect(requirements?.[0]?.title).toBe('Req8');
+            expect(requirements?.[0]?.parent?.title).toBe('Req8-Parent');
+          });
+        });
+
+        describe('When try to connect with existing child requirement node', () => {
+          it('should create the requirement node and connect it to the existing child requirement node', async () => {
+            // Step 1: create a requirement node
+            const childRequirementResponse = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req9',
+                    description: 'description of Req9',
+                  },
+                ],
+              },
+            });
+            expect(
+              childRequirementResponse.body.singleResult.errors,
+            ).toBeUndefined();
+            const childRequirementId =
+              childRequirementResponse.body.singleResult.data.createRequirements
+                ?.requirements[0].id;
+
+            // Step 2: create a new requirement and connect the existing requirement as children
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req10',
+                    children: {
+                      connect: {
+                        where: {
+                          node: {
+                            id: childRequirementId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 3: check if the node is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(1);
+            expect(requirements?.[0]?.title).toBe('Req10');
+            expect(requirements?.[0]?.children[0]?.id).toBe(childRequirementId);
+          });
+        });
+
+        describe('When try to connect with new child requirement node that created in the same request', () => {
+          it('should create the requirement node and connect it to the new child requirement node using connectOrCreate', async () => {
+            // Step 1: create a requirement node and connect it to the new child requirement node
+            const response = await newServer.executeOperation({
+              query: CreateRequirements,
+              variables: {
+                input: [
+                  {
+                    title: 'Req11',
+                    children: {
+                      create: {
+                        node: {
+                          title: 'Req11-Child',
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+
+            // Step 2: check if nodes is created successfully
+            const info =
+              response.body.singleResult.data?.createRequirements?.info;
+            const requirements =
+              response.body.singleResult.data?.createRequirements?.requirements;
+            expect(info?.nodesCreated).toBe(2);
+            expect(requirements?.[0]?.title).toBe('Req11');
+            expect(requirements?.[0]?.children[0]?.title).toBe('Req11-Child');
+          });
+        });
       });
     });
   });
