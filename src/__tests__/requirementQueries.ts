@@ -35,10 +35,6 @@ export const CreateRequirements = gql`
           email
         }
         updatedAt
-        parent {
-          id
-          title
-        }
         children {
           id
           title

@@ -30,7 +30,6 @@ export const typeDefs = [
       createdAt: DateTime! @timestamp(operations: [CREATE])
       creator: User @relationship(type: "CREATED", direction: IN)
       updatedAt: DateTime @timestamp(operations: [UPDATE])
-      parent: Requirement @relationship(type: "CHILD_OF", direction: OUT)
       children: [Requirement!]! @relationship(type: "CHILD_OF", direction: IN)
       tests: [Test!]! @relationship(type: "TESTED_BY", direction: IN)
     }
