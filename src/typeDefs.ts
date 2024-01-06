@@ -15,12 +15,14 @@ export const typeDefs = [
     }
 
     enum RequirementCategory {
+      ROOT
       CUSTOMER
       SYSTEM
       ENGINEERING
       USER_STORY
       IMPLEMENTATION
       QUALITY_ASSURANCE
+      UNDEFINED
     }
 
     type Requirement {
@@ -30,6 +32,7 @@ export const typeDefs = [
       createdAt: DateTime! @timestamp(operations: [CREATE])
       creator: User @relationship(type: "CREATED", direction: IN)
       updatedAt: DateTime @timestamp(operations: [UPDATE])
+      category: RequirementCategory @default(value: UNDEFINED)
       children: [Requirement!]! @relationship(type: "CHILD_OF", direction: IN)
       tests: [Test!]! @relationship(type: "TESTED_BY", direction: IN)
     }
