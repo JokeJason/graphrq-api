@@ -1,5 +1,5 @@
 # Use official Node.js LTS (Long Term Support) version as a parent image
-FROM node:18.19.0
+FROM node:20.12.0
 
 # Set the working directory in the container to /app
 WORKDIR /app
